@@ -1,333 +1,303 @@
 """
-Persian Tipster — Weekly Content Generator
-Ogni lunedì genera automaticamente:
-- Pre-match intel per le partite della settimana (con quote live)
-- Post educativo settimanale
-- Story templates
-- Aggiunge tutto allo scheduler
+Persian Tipster — Weekly Content Generator v2
+Copre: Azadegan League (Div 1), World Cup, altri sport iraniani.
+Ogni lunedì genera post settimanali automaticamente.
 """
 import os, json, requests, base64, time
 from datetime import datetime, timezone, timedelta
 
-COMPOSIO_KEY = os.environ["COMPOSIO_API_KEY"]
-OPENAI_KEY   = os.environ["OPENAI_API_KEY"]
+COMPOSIO_KEY   = os.environ["COMPOSIO_API_KEY"]
+OPENAI_KEY     = os.environ["OPENAI_API_KEY"]
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN","")
+ODDS_API_KEY   = "d37c9bca5b04e8e1093e5827cc96bdc3"
 
-IG_ACCOUNT   = "instagram_mease-bitter"
-NOTIFY_USER  = 899950945
+IG_ACCOUNT     = "instagram_mease-bitter"
+NOTIFY_USER    = 899950945
 PUBLISHED_FILE = "published.json"
 SCHEDULE_FILE  = "weekly_schedule.json"
 
-ODDS_API_KEY = "d37c9bca5b04e8e1093e5827cc96bdc3"  # from earlier
-
 TG_BASE = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
-# ── Posting times (Unix timestamps helper) ──────────────────
-def next_weekday_ts(weekday, hour_cet, minute_cet=30, weeks_ahead=0):
-    """Get Unix timestamp for next occurrence of weekday at hour:minute CET"""
-    now = datetime.now(timezone(timedelta(hours=2)))  # CET/CEST
-    days_ahead = weekday - now.weekday()
-    if days_ahead <= 0: days_ahead += 7
-    days_ahead += weeks_ahead * 7
-    target = now.replace(hour=hour_cet, minute=minute_cet, second=0, microsecond=0)
-    target = target + timedelta(days=days_ahead)
+# ── Timing helpers ───────────────────────────────────────────
+def cet_ts(days_from_now, hour=18, minute=30):
+    now = datetime.now(timezone(timedelta(hours=2)))
+    target = now + timedelta(days=days_from_now)
+    target = target.replace(hour=hour, minute=minute, second=0, microsecond=0)
     return int(target.timestamp())
 
-# ── OpenAI Image Generation (LOW quality = $0.011) ───────────
-def generate_image(prompt):
+# ── OpenAI Image (LOW quality = $0.011) ──────────────────────
+def gen_image(prompt):
     r = requests.post(
         "https://api.openai.com/v1/images/generations",
-        headers={"Authorization": f"Bearer {OPENAI_KEY}", "Content-Type": "application/json"},
-        json={"model": "gpt-image-1", "prompt": prompt,
-              "size": "1024x1024", "quality": "low", "output_format": "jpeg"},
-        timeout=60
-    )
-    data = r.json()
-    if data.get("data"):
-        return base64.b64decode(data["data"][0]["b64_json"])
-    print(f"  Image error: {data.get('error','?')}")
+        headers={"Authorization": f"Bearer {OPENAI_KEY}"},
+        json={"model":"gpt-image-1","prompt":prompt,
+              "size":"1024x1024","quality":"low","output_format":"jpeg"},
+        timeout=60)
+    d = r.json()
+    if d.get("data"):
+        return base64.b64decode(d["data"][0]["b64_json"])
+    print(f"  Image error: {d.get('error','?')}")
     return None
 
-# ── Upload image to Composio S3 via API ───────────────────────
-def upload_image_bytes(img_bytes, filename):
-    """Save image and upload to get s3key"""
-    path = f"/tmp/{filename}"
-    with open(path,"wb") as f: f.write(img_bytes)
-    
-    # Get presigned URL from Composio
-    headers = {"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"}
+# ── Upload image via Composio ─────────────────────────────────
+def upload_image(img_bytes, fname):
+    path = f"/tmp/{fname}"
+    open(path,"wb").write(img_bytes)
     r = requests.post(
-        "https://backend.composio.dev/api/v2/actions/COMPOSIO_FILE_UPLOAD/execute",
-        headers=headers,
-        json={"input": {"file_path": path}},
-        timeout=30
-    )
-    
-    # Alternative: use the file upload endpoint directly
-    r2 = requests.post(
         "https://backend.composio.dev/api/v3/files",
         headers={"x-api-key": COMPOSIO_KEY},
-        files={"file": (filename, open(path,"rb"), "image/jpeg")},
-        timeout=30
-    )
-    
-    if r2.status_code == 200:
-        data = r2.json()
-        return data.get("s3key") or data.get("key")
-    
-    print(f"  Upload error: {r2.status_code} {r2.text[:100]}")
-    return None
+        files={"file": (fname, open(path,"rb"), "image/jpeg")},
+        timeout=30)
+    if r.status_code in [200,201]:
+        d = r.json()
+        return d.get("s3key") or d.get("key")
+    # Fallback: try v2
+    r2 = requests.post(
+        "https://backend.composio.dev/api/v2/actions/COMPOSIO_FILE_UPLOAD/execute",
+        headers={"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"},
+        json={"input": {"file_content": base64.b64encode(img_bytes).decode(),
+                        "file_name": fname, "mime_type": "image/jpeg"}},
+        timeout=30)
+    d2 = r2.json()
+    return d2.get("data",{}).get("s3key")
 
-def create_ig_container(s3key, caption, media_type="IMAGE"):
-    headers = {"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"}
+def create_container(s3key, caption):
     r = requests.post(
         "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA/execute",
-        headers=headers,
-        json={"input": {"ig_user_id": "me",
-                        "image_file": {"mimetype":"image/jpeg","name":"post.jpg","s3key":s3key},
-                        "caption": caption},
+        headers={"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"},
+        json={"input": {"ig_user_id":"me",
+                        "image_file":{"mimetype":"image/jpeg","name":"post.jpg","s3key":s3key},
+                        "caption":caption},
               "connectedAccountId": IG_ACCOUNT},
-        timeout=30
-    )
-    data = r.json()
-    return data.get("data", {}).get("id")
+        timeout=30)
+    return r.json().get("data",{}).get("id")
 
-# ── Get upcoming matches from The Odds API ────────────────────
-def get_upcoming_matches():
-    matches = []
-    
-    # World Cup first (if active)
-    r = requests.get("https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds/",
-        params={"apiKey": ODDS_API_KEY, "regions": "eu", "markets": "h2h,totals",
-                "oddsFormat": "decimal", "dateFormat": "unix"},
-        timeout=15)
-    
-    if r.status_code == 200:
-        for match in r.json():
-            home, away = match.get("home_team",""), match.get("away_team","")
-            if "Iran" in home or "Iran" in away:
-                commence = match.get("commence_time", 0)
-                now = int(time.time())
-                if commence > now:  # future match
-                    # Extract odds
-                    h2h = {}
-                    for bm in match.get("bookmakers",[])[:5]:
-                        for mkt in bm.get("markets",[]):
-                            if mkt.get("key")=="h2h":
-                                for o in mkt.get("outcomes",[]):
-                                    name = o.get("name")
-                                    price = o.get("price",0)
-                                    if name not in h2h: h2h[name]=[]
-                                    h2h[name].append(price)
-                    
-                    avg_odds = {k: round(sum(v)/len(v),2) for k,v in h2h.items() if v}
-                    matches.append({
-                        "home": home, "away": away,
-                        "ts": commence, "odds": avg_odds,
-                        "competition": "FIFA World Cup 2026"
-                    })
-    
-    # Sort by date
-    matches.sort(key=lambda x: x["ts"])
-    return matches[:3]  # max 3 matches per week
+# ── Get Azadegan League fixtures via SportDB ──────────────────
+def get_azadegan_fixtures():
+    """Get upcoming Azadegan League fixtures from SportDB"""
+    try:
+        # SportDB ID for Azadegan League
+        r = requests.get(
+            "https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=4946",
+            headers={"User-Agent": "PersianTipster/1.0"}, timeout=10)
+        events = r.json().get("events", []) or []
+        
+        matches = []
+        now_ts = int(time.time())
+        
+        for e in events[:5]:
+            date_str = e.get("dateEvent","")
+            time_str = e.get("strTime","") or "00:00:00"
+            if date_str:
+                try:
+                    dt = datetime.fromisoformat(f"{date_str}T{time_str[:8]}").replace(
+                        tzinfo=timezone.utc)
+                    ts = int(dt.timestamp())
+                    if ts > now_ts:
+                        matches.append({
+                            "home": e.get("strHomeTeam",""),
+                            "away": e.get("strAwayTeam",""),
+                            "ts": ts,
+                            "date_str": date_str,
+                            "competition": "Azadegan League (Division 1)",
+                            "league_short": "DIV 1"
+                        })
+                except:
+                    pass
+        
+        return matches[:3]
+    except Exception as ex:
+        print(f"  SportDB error: {ex}")
+        return []
 
-# ── Generate weekly content ───────────────────────────────────
-def generate_prematch_post(match):
+# ── Get World Cup Iran fixtures ───────────────────────────────
+def get_wc_fixtures():
+    try:
+        r = requests.get(
+            "https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=134511",
+            headers={"User-Agent":"PersianTipster/1.0"}, timeout=10)
+        events = r.json().get("events",[]) or []
+        now_ts = int(time.time())
+        matches = []
+        for e in events[:2]:
+            date_str = e.get("dateEvent","")
+            time_str = e.get("strTime","") or "00:00:00"
+            if date_str:
+                try:
+                    dt = datetime.fromisoformat(f"{date_str}T{time_str[:8]}").replace(tzinfo=timezone.utc)
+                    ts = int(dt.timestamp())
+                    if ts > now_ts:
+                        matches.append({
+                            "home": e.get("strHomeTeam",""),
+                            "away": e.get("strAwayTeam",""),
+                            "ts": ts, "date_str": date_str,
+                            "competition": "FIFA World Cup 2026",
+                            "league_short": "WC 2026"
+                        })
+                except:
+                    pass
+        return matches
+    except:
+        return []
+
+# ── Generate prematch post ────────────────────────────────────
+def gen_prematch(match):
     home, away = match["home"], match["away"]
-    odds = match["odds"]
-    date_str = datetime.fromtimestamp(match["ts"], tz=timezone.utc).strftime("%d %b %Y")
-    competition = match["competition"]
-    
-    # Generate image
-    home_odd = odds.get(home, 0)
-    away_odd = odds.get(away, 0)
-    draw_odd = odds.get("Draw", 0)
-    
+    comp = match["competition"]
+    league_short = match["league_short"]
+    date_str = match["date_str"]
+
     prompt = f"""Professional dark sports betting Instagram post.
-    Black background with orange-red glow effect.
-    Top gold bold text: PRE-MATCH INTEL
-    Center large white text: {home.upper()} vs {away.upper()}
-    Small text below: {date_str} · {competition}
-    Three dark gold-bordered stat boxes:
-    Left: '{home.upper()} WIN' with '{home_odd}' in gold large
-    Center: 'DRAW' with '{draw_odd}' in grey
-    Right: '{away.upper()} WIN' with '{away_odd}' in blue
-    Bottom gold text: @persiantipster
-    Thin red accent bars top and bottom.
-    Professional sports analytics design. No people."""
-    
-    img_bytes = generate_image(prompt)
-    if not img_bytes:
-        return None
-    
-    # Generate caption
+Black background with red-orange atmospheric glow.
+Bold gold top text: PRE-MATCH INTEL
+Large white center text: {home.upper()} vs {away.upper()}
+Small gold text: {date_str} · {comp}
+Three dark boxes with gold borders showing WIN odds.
+Bottom gold text: @persiantipster · Free analysis: link in bio
+Thin red accent lines top and bottom.
+Professional sports analytics design. No people or faces."""
+
+    img = gen_image(prompt)
+    if not img: return None
+
     caption = f"""PRE-MATCH INTEL 📊
 
 {home} vs {away}
-{date_str} · {competition}
+{comp}
 
-Live odds from 30+ bookmakers:
+⚽ {date_str}
 
-{'🟢' if home_odd < 2 else '⚪'} {home} win: {home_odd}
-⚪ Draw: {draw_odd}
-{'🔴' if away_odd > 3 else '⚪'} {away} win: {away_odd}
+Iranian football — the market European bookmakers underestimate every week.
 
-The context that mainstream tipsters won't give you:
-• {home} style: defensive, pragmatic, 1-0 wins
-• Bookmakers underestimate Iranian football every time
-• This is where +31% yield comes from
+This is where +31% yield comes from. Not from Premier League. From knowing what others don't.
 
 Full analysis drops on Telegram before kick-off.
 
 📲 Free channel → link in bio
 📊 persiantipster.blogabet.com
 
-#{'iranworldcup' if 'Iran' in home or 'Iran' in away else 'iranianfootball'} #bettingtips #valuebetting #persiantipster #sportsbetting #prematchanalysis"""
-    
-    # Schedule 48h before match
-    post_ts = match["ts"] - (48 * 3600)
-    now_ts = int(time.time())
-    if post_ts < now_ts:
-        post_ts = now_ts + 3600  # if already past, post in 1 hour
-    
-    return {"img_bytes": img_bytes, "caption": caption, "ts": post_ts,
-            "name": f"prematch_{home.lower().replace(' ','_')}_vs_{away.lower().replace(' ','_')}"}
+#iranianfootball #{'azadegan' if 'Azadegan' in comp or 'Division' in comp else 'worldcup2026'} #footballbetting #valuebetting #persiantipster #bettingtips #sportsbetting #{"div1iran" if 'Div' in league_short else "iranworldcup"}"""
 
-def generate_educational_post():
-    """Generate weekly educational carousel post"""
-    topics = [
-        ("ASIAN HANDICAP GUIDE", "Why removing the draw doubles your edge"),
-        ("VALUE BETTING 101", "How to find edges the bookmakers miss"),
-        ("IRANIAN FOOTBALL EXPLAINED", "The market nobody else is covering"),
-        ("BANKROLL MANAGEMENT", "Why most bettors lose — and how to avoid it"),
-        ("UNDERSTANDING ODDS", "Converting odds to probability"),
-    ]
-    
-    # Pick based on week number
+    post_ts = max(match["ts"] - 48*3600, cet_ts(1))
+    return {"img":img, "caption":caption, "ts":post_ts,
+            "name":f"prematch_{home[:10].lower().replace(' ','_')}_vs_{away[:10].lower().replace(' ','_')}"}
+
+# ── Weekly educational topics ─────────────────────────────────
+TOPICS = [
+    ("AZADEGAN LEAGUE GUIDE", "Division 1 — The market European bettors ignore"),
+    ("ASIAN HANDICAP vs 1X2", "Why smart bettors never use 1X2"),
+    ("VALUE BETTING 101", "How to find edges the bookmakers miss"),
+    ("BANKROLL MANAGEMENT", "Why most bettors lose — and how to avoid it"),
+    ("IRANIAN FOOTBALL INSIDER", "5 things European bookmakers don't know"),
+    ("UNDER MARKET STRATEGY", "Why Iranian matches stay tight — and how to profit"),
+]
+
+def gen_educational():
     week = datetime.now().isocalendar()[1]
-    topic, subtitle = topics[week % len(topics)]
-    
-    prompt = f"""Professional dark educational sports betting Instagram post.
-    Black background with subtle red glow.
-    Top small gold text: PERSIAN TIPSTER EDUCATION
-    Large bold gold title: {topic}
-    White subtitle: {subtitle}
-    5 bullet points in white text about the topic.
-    Bottom: @persiantipster in gold.
-    Clean professional design with gold accent lines.
-    No people. Sports analytics aesthetic."""
-    
-    img_bytes = generate_image(prompt)
-    if not img_bytes: return None
-    
+    topic, subtitle = TOPICS[week % len(TOPICS)]
+
+    prompt = f"""Dark professional educational sports betting Instagram post.
+Black background with subtle red-orange glow.
+Small top text: PERSIAN TIPSTER · EDUCATION
+Large bold gold title: {topic}
+White subtitle below: {subtitle}
+Clean minimalist sports analytics design.
+@persiantipster footer in gold.
+No people. Professional dark aesthetic."""
+
+    img = gen_image(prompt)
+    if not img: return None
+
     caption = f"""📚 {topic}
 
 {subtitle}
 
-Swipe for the full breakdown →
+This is what separates profitable bettors from the rest.
 
-This is the knowledge that separates profitable bettors from the other 95%.
+I've been applying these principles on Iranian football, futsal, volleyball, basketball and handball for years.
 
-I've been applying these principles on Iranian football markets for years.
-Result: +31% yield over 756 documented picks on Blogabet.
+Result: +31% yield. 756 documented picks. All verified on Blogabet.
 
-📊 Full record → persiantipster.blogabet.com
+Save this post — you'll want to come back to it.
+
+📊 persiantipster.blogabet.com
 📲 Free daily picks → link in bio
 
-#valuebetting #bettingstrategy #persiantipster #bettingeducation #sportsbetting #footballbetting"""
-    
-    return {"img_bytes": img_bytes, "caption": caption,
-            "ts": next_weekday_ts(0, 18, 30),  # Monday 18:30 CET
-            "name": f"educational_{topic.lower().replace(' ','_')}"}
+#valuebetting #bettingstrategy #persiantipster #bettingeducation #sportsbetting #iranianfootball #footballbetting"""
 
+    return {"img":img, "caption":caption, "ts":cet_ts(0,18,30),
+            "name":f"edu_week{datetime.now().isocalendar()[1]}"}
+
+# ── Main ──────────────────────────────────────────────────────
 def load_schedule():
-    if os.path.exists(SCHEDULE_FILE):
-        with open(SCHEDULE_FILE) as f: return json.load(f)
-    return []
+    return json.load(open(SCHEDULE_FILE)) if os.path.exists(SCHEDULE_FILE) else []
 
-def save_schedule(schedule):
-    with open(SCHEDULE_FILE,"w") as f: json.dump(schedule, f, indent=2)
-
-def main():
-    print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Weekly Generator starting...")
-    
-    schedule = load_schedule()
-    published = load_published() if os.path.exists(PUBLISHED_FILE) else {}
-    new_posts = []
-    
-    # 1. Pre-match intel for upcoming Iran matches
-    print("\n📅 Checking upcoming matches...")
-    matches = get_upcoming_matches()
-    print(f"  Found {len(matches)} upcoming Iran matches")
-    
-    for match in matches:
-        key = f"prematch_{match['home']}_{match['away']}_{match['ts']}"
-        if any(s.get("name","").startswith(f"prematch_{match['home'].lower().replace(' ','_')}_vs") for s in schedule):
-            print(f"  ⏭ {match['home']} vs {match['away']}: already scheduled")
-            continue
-        
-        print(f"\n  Generating: {match['home']} vs {match['away']}")
-        post = generate_prematch_post(match)
-        if post:
-            # Save image temporarily
-            img_path = f"/tmp/{post['name']}.jpg"
-            with open(img_path,"wb") as f: f.write(post["img_bytes"])
-            
-            # Upload to S3
-            s3key = upload_image_bytes(post["img_bytes"], f"{post['name']}.jpg")
-            
-            if s3key:
-                # Create Instagram container
-                container_id = create_ig_container(s3key, post["caption"])
-                if container_id:
-                    schedule.append({
-                        "id": container_id, "ts": post["ts"],
-                        "name": post["name"], "type": "prematch"
-                    })
-                    new_posts.append(post["name"])
-                    print(f"  ✅ Scheduled: {post['name']} (container: {container_id})")
-                else:
-                    print(f"  ❌ Container creation failed")
-            else:
-                print(f"  ❌ Upload failed")
-    
-    # 2. Weekly educational post
-    print("\n📚 Generating educational post...")
-    edu = generate_educational_post()
-    edu_key = f"educational_week_{datetime.now().isocalendar()[1]}"
-    
-    if edu and edu_key not in [s.get("name","") for s in schedule]:
-        img_path = f"/tmp/{edu['name']}.jpg"
-        with open(img_path,"wb") as f: f.write(edu["img_bytes"])
-        
-        s3key = upload_image_bytes(edu["img_bytes"], f"{edu['name']}.jpg")
-        if s3key:
-            container_id = create_ig_container(s3key, edu["caption"])
-            if container_id:
-                schedule.append({
-                    "id": container_id, "ts": edu["ts"],
-                    "name": edu_key, "type": "educational"
-                })
-                new_posts.append(edu_key)
-                print(f"  ✅ Educational post scheduled")
-    
-    save_schedule(schedule)
-    
-    # Notify via Telegram
-    if new_posts and TELEGRAM_TOKEN:
-        msg = f"🟠 WEEKLY GENERATOR\n\n✅ {len(new_posts)} nuovi post generati e schedulati:\n"
-        for p in new_posts:
-            msg += f"  • {p}\n"
-        requests.post(f"{TG_BASE}/sendMessage",
-            json={"chat_id": NOTIFY_USER, "text": msg, "disable_notification": True},
-            timeout=10)
-    
-    print(f"\n✅ Done. Generated {len(new_posts)} new posts.")
+def save_schedule(s):
+    json.dump(s, open(SCHEDULE_FILE,"w"), indent=2)
 
 def load_published():
-    if os.path.exists(PUBLISHED_FILE):
-        with open(PUBLISHED_FILE) as f: return json.load(f)
-    return {}
+    return json.load(open(PUBLISHED_FILE)) if os.path.exists(PUBLISHED_FILE) else {}
+
+def main():
+    print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Weekly Generator v2 starting...")
+
+    schedule = load_schedule()
+    new_posts = []
+
+    # 1. Azadegan League pre-match intel
+    print("\n📅 Fetching Azadegan League fixtures...")
+    div1_matches = get_azadegan_fixtures()
+    print(f"  Found {len(div1_matches)} upcoming Division 1 matches")
+
+    # 2. World Cup fixtures (if still active)
+    print("\n🏆 Fetching World Cup fixtures...")
+    wc_matches = get_wc_fixtures()
+    print(f"  Found {len(wc_matches)} upcoming WC matches")
+
+    all_matches = div1_matches + wc_matches
+
+    for match in all_matches:
+        slug = f"prematch_{match['home'][:8]}_{match['away'][:8]}_{match['ts']}"
+        if any(slug[:20] in s.get("name","") for s in schedule):
+            print(f"  ⏭ Already scheduled: {match['home']} vs {match['away']}")
+            continue
+
+        print(f"\n  Generating: {match['home']} vs {match['away']} ({match['competition']})")
+        post = gen_prematch(match)
+        if not post: continue
+
+        s3key = upload_image(post["img"], f"{post['name']}.jpg")
+        if not s3key: print(f"  ❌ Upload failed"); continue
+
+        cid = create_container(s3key, post["caption"])
+        if cid:
+            schedule.append({"id":cid,"ts":post["ts"],"name":post["name"],"type":"prematch"})
+            new_posts.append(post["name"])
+            print(f"  ✅ Scheduled: {post['name']} (container: {cid})")
+
+    # 3. Educational post
+    print("\n📚 Generating educational post...")
+    edu_key = f"edu_week{datetime.now().isocalendar()[1]}"
+    if edu_key not in [s.get("name","") for s in schedule]:
+        edu = gen_educational()
+        if edu:
+            s3key = upload_image(edu["img"], f"{edu['name']}.jpg")
+            if s3key:
+                cid = create_container(s3key, edu["caption"])
+                if cid:
+                    schedule.append({"id":cid,"ts":edu["ts"],"name":edu_key,"type":"educational"})
+                    new_posts.append(edu_key)
+                    print(f"  ✅ Educational post scheduled")
+
+    save_schedule(schedule)
+
+    if new_posts and TELEGRAM_TOKEN:
+        msg = f"🟠 WEEKLY GENERATOR\n\n✅ {len(new_posts)} nuovi post:\n"
+        for p in new_posts: msg += f"  • {p}\n"
+        requests.post(f"{TG_BASE}/sendMessage",
+            json={"chat_id":NOTIFY_USER,"text":msg,"disable_notification":True}, timeout=10)
+
+    print(f"\n✅ Done. {len(new_posts)} new posts generated.")
 
 if __name__ == "__main__":
     main()
