@@ -3,23 +3,25 @@ name: Persian Tipster — Full Automation
 on:
   schedule:
     - cron: '*/15 * * * *'   # ogni 15 min: pubblica post schedulati
-    - cron: '0 * * * *'      # ogni ora: scansiona Telegram per nuovi video
-    - cron: '0 6 * * 1'      # ogni lunedì alle 06:00 UTC: genera contenuto settimana
+    - cron: '0 * * * *'      # ogni ora: scansiona Telegram nuovi video
+    - cron: '30 6 * * *'     # ogni giorno 08:30 CET: story mattutina
+    - cron: '0 6 * * 1'      # ogni lunedì 08:00 UTC: genera contenuto settimanale
   workflow_dispatch:
     inputs:
       task:
-        description: 'Task to run'
+        description: 'Task'
         required: false
-        default: 'all'
+        default: 'publish'
         type: choice
-        options: [all, publish, telegram, weekly]
+        options: [publish, telegram, weekly, story_morning, story_matchday, story_win]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ─── 1. PUBBLICA POST SCHEDULATI ──────────────────────────
+  # ── 1. PUBBLICA POST SCHEDULATI ────────────────────────────
   publish:
+    if: github.event.schedule == '*/15 * * * *' || github.event.inputs.task == 'publish' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,10 +32,10 @@ jobs:
         env:
           COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
 
-  # ─── 2. SCANSIONA TELEGRAM E PUBBLICA REELS ───────────────
+  # ── 2. SCANSIONA TELEGRAM → REELS ─────────────────────────
   telegram:
+    if: github.event.schedule == '0 * * * *' || github.event.inputs.task == 'telegram'
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 * * * *' || github.event.inputs.task == 'telegram' || github.event.inputs.task == 'all'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,7 +49,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-      - name: Commit scan state
+      - name: Save scan state
         run: |
           git config user.email "bot@persiantipster.com"
           git config user.name "PersianTipster Bot"
@@ -55,10 +57,58 @@ jobs:
           git diff --staged --quiet || git commit -m "Update scan state [skip ci]"
           git push || true
 
-  # ─── 3. GENERA CONTENUTO SETTIMANALE ──────────────────────
-  weekly:
+  # ── 3. STORY MATTUTINA (ogni giorno 08:30 CET) ────────────
+  story_morning:
+    if: github.event.schedule == '30 6 * * *' || github.event.inputs.task == 'story_morning'
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 6 * * 1' || github.event.inputs.task == 'weekly' || github.event.inputs.task == 'all'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: python scripts/stories.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          STORY_TYPE: morning
+
+  # ── 4. STORY MATCH DAY (manuale) ──────────────────────────
+  story_matchday:
+    if: github.event.inputs.task == 'story_matchday'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: python scripts/stories.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          STORY_TYPE: matchday
+
+  # ── 5. STORY WIN (manuale dopo una vittoria) ───────────────
+  story_win:
+    if: github.event.inputs.task == 'story_win'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: python scripts/stories.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          STORY_TYPE: win
+
+  # ── 6. GENERA CONTENUTO SETTIMANALE (ogni lunedì) ─────────
+  weekly:
+    if: github.event.schedule == '0 6 * * 1' || github.event.inputs.task == 'weekly'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -69,10 +119,10 @@ jobs:
           COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      - name: Commit new schedule
+      - name: Save new schedule
         run: |
           git config user.email "bot@persiantipster.com"
           git config user.name "PersianTipster Bot"
           git add -A
-          git diff --staged --quiet || git commit -m "Add weekly schedule [skip ci]"
+          git diff --staged --quiet || git commit -m "Weekly schedule update [skip ci]"
           git push || true
