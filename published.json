@@ -1,1 +1,104 @@
-{}
+"""
+Persian Tipster — Master Scheduler
+Pubblica post da due sorgenti:
+1. published.json — post fissi (World Cup schedule)
+2. weekly_schedule.json — post generati ogni settimana
+Gira ogni 15 minuti via GitHub Actions.
+"""
+import os, json, time, requests
+from datetime import datetime, timezone
+
+COMPOSIO_KEY = os.environ["COMPOSIO_API_KEY"]
+WINDOW_SEC   = 900  # 15 min window
+IG_ACCOUNT   = "instagram_mease-bitter"
+
+PUBLISHED_FILE = "published.json"
+SCHEDULE_FILE  = "weekly_schedule.json"
+
+# ── Post fissi World Cup ─────────────────────────────────────
+FIXED_POSTS = [
+    {"id": "18100412321277949", "ts": 1780763400, "name": "visa_drama - 6 giu 18:30"},
+    {"id": "18100412384277949", "ts": 1780936200, "name": "taremi_analysis - 8 giu 18:30"},
+    {"id": "18100412375277949", "ts": 1781109000, "name": "group_g - 10 giu 18:30"},
+    {"id": "18100412378277949", "ts": 1781281800, "name": "under_picks - 12 giu 18:30"},
+    {"id": "18100412381277949", "ts": 1781368200, "name": "iran_nz_deep - 13 giu 18:30"},
+    {"id": "18100412429277949", "ts": 1781506800, "name": "matchday_iran_nz - 15 giu 09:00"},
+    {"id": "18100412432277949", "ts": 1781800200, "name": "belgium_intel - 18 giu 18:30"},
+    {"id": "18100412438277949", "ts": 1781938800, "name": "matchday_bel_iran - 20 giu 09:00"},
+    {"id": "18100412435277949", "ts": 1782318600, "name": "egypt_intel - 24 giu 18:30"},
+    {"id": "18100412477277949", "ts": 1782370800, "name": "matchday_egy_iran - 25 giu 09:00"},
+]
+
+def load_published():
+    if os.path.exists(PUBLISHED_FILE):
+        with open(PUBLISHED_FILE) as f: return json.load(f)
+    return {}
+
+def save_published(data):
+    with open(PUBLISHED_FILE,"w") as f: json.dump(data, f, indent=2)
+
+def load_weekly():
+    if os.path.exists(SCHEDULE_FILE):
+        with open(SCHEDULE_FILE) as f: return json.load(f)
+    return []
+
+def publish_container(container_id):
+    r = requests.post(
+        "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH/execute",
+        headers={"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"},
+        json={"input": {"ig_user_id": "me", "creation_id": container_id,
+                        "max_wait_seconds": 90},
+              "connectedAccountId": IG_ACCOUNT},
+        timeout=120
+    )
+    data = r.json()
+    return data.get("data", {}).get("id")
+
+def main():
+    now = int(time.time())
+    print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Scheduler running...")
+
+    published = load_published()
+    weekly    = load_weekly()
+
+    # Merge all scheduled posts
+    all_posts = list(FIXED_POSTS) + [
+        {"id": p["id"], "ts": p["ts"], "name": p["name"]}
+        for p in weekly if p.get("id") and p.get("ts")
+    ]
+
+    published_count = 0
+
+    for post in all_posts:
+        pid  = post["id"]
+        diff = now - post["ts"]
+
+        if 0 <= diff <= WINDOW_SEC and pid not in published:
+            print(f"  → Publishing: {post['name']}")
+            ig_id = publish_container(pid)
+
+            if ig_id:
+                published[pid] = {
+                    "name": post["name"],
+                    "published_at": datetime.now(timezone.utc).isoformat(),
+                    "instagram_post_id": ig_id
+                }
+                save_published(published)
+                print(f"  ✅ Published! Instagram ID: {ig_id}")
+                published_count += 1
+            else:
+                print(f"  ❌ Failed")
+
+        elif diff < 0:
+            h = abs(diff) // 3600
+            m = (abs(diff) % 3600) // 60
+            print(f"  ⏳ {post['name']}: in {h}h {m}m")
+
+        elif pid in published:
+            print(f"  ✅ {post['name']}: done")
+
+    if published_count == 0:
+        print("  Nothing to publish this run.")
+
+if __name__ == "__main__":
+    main()
