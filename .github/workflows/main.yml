@@ -2,10 +2,10 @@ name: Persian Tipster — Full Automation
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # ogni 15 min: pubblica post schedulati
-    - cron: '0 * * * *'      # ogni ora: scansiona Telegram nuovi video
-    - cron: '30 6 * * *'     # ogni giorno 08:30 CET: story mattutina
-    - cron: '0 6 * * 1'      # ogni lunedì 08:00 UTC: genera contenuto settimanale
+    - cron: '*/15 * * * *'
+    - cron: '0 * * * *'
+    - cron: '30 6 * * *'
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       task:
@@ -19,27 +19,28 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ── 1. PUBBLICA POST SCHEDULATI ────────────────────────────
+
   publish:
     if: github.event.schedule == '*/15 * * * *' || github.event.inputs.task == 'publish' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: python scripts/scheduler.py
         env:
           COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
 
-  # ── 2. SCANSIONA TELEGRAM → REELS ─────────────────────────
   telegram:
     if: github.event.schedule == '0 * * * *' || github.event.inputs.task == 'telegram'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg --fix-missing -q
       - run: python scripts/telegram_scanner.py
@@ -57,14 +58,14 @@ jobs:
           git diff --staged --quiet || git commit -m "Update scan state [skip ci]"
           git push || true
 
-  # ── 3. STORY MATTUTINA (ogni giorno 08:30 CET) ────────────
   story_morning:
     if: github.event.schedule == '30 6 * * *' || github.event.inputs.task == 'story_morning'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: python scripts/stories.py
         env:
@@ -75,14 +76,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
-  # ── 4. STORY MATCH DAY (manuale) ──────────────────────────
   story_matchday:
     if: github.event.inputs.task == 'story_matchday'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: python scripts/stories.py
         env:
@@ -90,15 +91,17 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           STORY_TYPE: matchday
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
-  # ── 5. STORY WIN (manuale dopo una vittoria) ───────────────
   story_win:
     if: github.event.inputs.task == 'story_win'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: python scripts/stories.py
         env:
@@ -106,15 +109,17 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           STORY_TYPE: win
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
-  # ── 6. GENERA CONTENUTO SETTIMANALE (ogni lunedì) ─────────
   weekly:
     if: github.event.schedule == '0 6 * * 1' || github.event.inputs.task == 'weekly'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
+        with:
+          python-version: '3.11'
       - run: pip install requests -q
       - run: python scripts/weekly_generator.py
         env:
