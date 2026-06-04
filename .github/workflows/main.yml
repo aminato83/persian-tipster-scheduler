@@ -1,0 +1,78 @@
+name: Persian Tipster — Full Automation
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # ogni 15 min: pubblica post schedulati
+    - cron: '0 * * * *'      # ogni ora: scansiona Telegram per nuovi video
+    - cron: '0 6 * * 1'      # ogni lunedì alle 06:00 UTC: genera contenuto settimana
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run'
+        required: false
+        default: 'all'
+        type: choice
+        options: [all, publish, telegram, weekly]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ─── 1. PUBBLICA POST SCHEDULATI ──────────────────────────
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: python scripts/scheduler.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+
+  # ─── 2. SCANSIONA TELEGRAM E PUBBLICA REELS ───────────────
+  telegram:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 * * * *' || github.event.inputs.task == 'telegram' || github.event.inputs.task == 'all'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: sudo apt-get install -y ffmpeg -q
+      - run: python scripts/telegram_scanner.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Commit scan state
+        run: |
+          git config user.email "bot@persiantipster.com"
+          git config user.name "PersianTipster Bot"
+          git add -A
+          git diff --staged --quiet || git commit -m "Update scan state [skip ci]"
+          git push || true
+
+  # ─── 3. GENERA CONTENUTO SETTIMANALE ──────────────────────
+  weekly:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 6 * * 1' || github.event.inputs.task == 'weekly' || github.event.inputs.task == 'all'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests -q
+      - run: python scripts/weekly_generator.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      - name: Commit new schedule
+        run: |
+          git config user.email "bot@persiantipster.com"
+          git config user.name "PersianTipster Bot"
+          git add -A
+          git diff --staged --quiet || git commit -m "Add weekly schedule [skip ci]"
+          git push || true
