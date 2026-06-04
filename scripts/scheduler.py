@@ -1,13 +1,8 @@
-"""
-Persian Tipster — Instagram Auto-Scheduler v2
-Usa Composio API per pubblicare — nessun token Instagram necessario.
-Gira ogni 15 minuti via GitHub Actions.
-"""
 import os, json, time, requests
 from datetime import datetime, timezone
 
 COMPOSIO_API_KEY = os.environ["COMPOSIO_API_KEY"]
-WINDOW_SEC = 900  # 15 minuti
+WINDOW_SEC = 900
 
 SCHEDULE = [
     {"id": "18100412321277949", "ts": 1780763400, "name": "visa_drama - 6 giu 18:30"},
@@ -35,18 +30,10 @@ def save_published(data):
         json.dump(data, f, indent=2)
 
 def publish_via_composio(container_id):
-    """Chiama Composio API per pubblicare il container Instagram"""
     url = "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH/execute"
-    headers = {
-        "x-api-key": COMPOSIO_API_KEY,
-        "Content-Type": "application/json"
-    }
+    headers = {"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"}
     body = {
-        "input": {
-            "creation_id": container_id,
-            "ig_user_id": "me",
-            "max_wait_seconds": 60
-        },
+        "input": {"creation_id": container_id, "ig_user_id": "me", "max_wait_seconds": 60},
         "connectedAccountId": "instagram_mease-bitter"
     }
     r = requests.post(url, headers=headers, json=body, timeout=30)
@@ -56,36 +43,28 @@ def main():
     now = int(time.time())
     print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Checking schedule...")
     published = load_published()
-
     for post in SCHEDULE:
         pid = post["id"]
         diff = now - post["ts"]
-
         if 0 <= diff <= WINDOW_SEC and pid not in published:
-            print(f"  → Publishing: {post['name']}")
+            print(f"  Publishing: {post['name']}")
             result = publish_via_composio(pid)
-            
-            # Check if successful
             success = result.get("successfull") or result.get("successful") or \
-                      (result.get("data") and result["data"].get("id"))
-            
+                      (isinstance(result.get("data"), dict) and result["data"].get("id"))
             if success:
-                ig_id = result.get("data", {}).get("id", "unknown")
-                published[pid] = {
-                    "name": post["name"],
-                    "published_at": datetime.now(timezone.utc).isoformat(),
-                    "instagram_post_id": ig_id
-                }
+                ig_id = result.get("data", {}).get("id", "ok")
+                published[pid] = {"name": post["name"],
+                                  "published_at": datetime.now(timezone.utc).isoformat(),
+                                  "instagram_post_id": ig_id}
                 save_published(published)
-                print(f"  ✅ Published! Instagram ID: {ig_id}")
+                print(f"  Published! Instagram ID: {ig_id}")
             else:
-                print(f"  ❌ Error: {result}")
-
+                print(f"  Error: {result}")
         elif diff < 0:
-            h, m = abs(diff) // 3600, (abs(diff) % 3600) // 60
-            print(f"  ⏳ {post['name']}: in {h}h {m}m")
+            h, m = abs(diff)//3600, (abs(diff)%3600)//60
+            print(f"  Waiting: {post['name']} in {h}h {m}m")
         elif pid in published:
-            print(f"  ✅ {post['name']}: already published")
+            print(f"  Done: {post['name']}")
 
 if __name__ == "__main__":
     main()
