@@ -96,7 +96,7 @@ def publish_story(image_url):
 
     # Create container using image_url (no file upload needed)
     r1 = requests.post(
-        "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA/execute",
+        "https://backend.composio.dev/api/v3/actions/INSTAGRAM_POST_IG_USER_MEDIA/execute",
         headers=headers,
         json={"input": {"ig_user_id":"me",
                         "media_type":"STORIES",
@@ -114,7 +114,7 @@ def publish_story(image_url):
 
     # Publish
     r2 = requests.post(
-        "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH/execute",
+        "https://backend.composio.dev/api/v3/actions/INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH/execute",
         headers=headers,
         json={"input":{"ig_user_id":"me","creation_id":cid,"max_wait_seconds":60},
               "connectedAccountId": IG_ACCOUNT},
