@@ -39,7 +39,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
       - run: pip install requests -q
-      - run: sudo apt-get install -y ffmpeg -q
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg --fix-missing -q
       - run: python scripts/telegram_scanner.py
         env:
           COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
