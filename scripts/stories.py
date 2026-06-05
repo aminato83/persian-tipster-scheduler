@@ -23,7 +23,7 @@ def gen_image(prompt):
         "https://api.openai.com/v1/images/generations",
         headers={"Authorization": f"Bearer {OPENAI_KEY}"},
         json={"model":"gpt-image-1","prompt":prompt,
-              "size":"1024x1024","quality":"low","output_format":"jpeg"},
+              "size":"1024x1536","quality":"low","output_format":"jpeg"},
         timeout=60)
     d = r.json()
     if d.get("data"):
