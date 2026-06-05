@@ -1,7 +1,6 @@
 """
-Persian Tipster — Telegram Command Handler
-Gira ogni 2 minuti su GitHub Actions.
-Comandi supportati:
+Persian Tipster — Telegram Command Handler v2
+Comandi:
   /story morning   → story mattutina
   /story win       → story vittoria
   /story matchday  → story giorno partita
@@ -12,39 +11,39 @@ from datetime import datetime, timezone
 TG_TOKEN      = os.environ["TELEGRAM_BOT_TOKEN"]
 OPENAI_KEY    = os.environ["OPENAI_API_KEY"]
 COMPOSIO_KEY  = os.environ["COMPOSIO_API_KEY"]
-ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
 GH_TOKEN      = os.environ.get("GITHUB_TOKEN","")
 GH_REPO       = os.environ.get("GITHUB_REPOSITORY","")
 
 AUTHORIZED_USER = 899950945
-TG_BASE = f"https://api.telegram.org/bot{TG_TOKEN}"
+TG_BASE   = f"https://api.telegram.org/bot{TG_TOKEN}"
+IG_ACCOUNT = "instagram_mease-bitter"
 OFFSET_FILE = "telegram_offset.json"
-IG_ACCOUNT  = "instagram_mease-bitter"
 
-# ── State ─────────────────────────────────────────────────────
+PROMPTS = {
+    "morning":  "Vertical portrait dark sports betting Instagram Story. Black background deep red-orange glow. Bold gold text: PICKS ARE LIVE. White: Free daily Iranian sports analysis on Telegram. Small: Football Futsal Volleyball Basketball Handball. Bottom: @persiantipster link in bio. Dark cinematic luxury sports style. No people.",
+    "win":      "Vertical portrait dark sports betting Instagram Story. Black gold green celebration. Confetti. Huge bold gold text: WE WON. White: Another verified win on Blogabet. Small: +31% yield 756 picks All verified. Bottom: @persiantipster. No people.",
+    "matchday": "Vertical portrait dark sports betting Instagram Story. Black background orange-red fire. Bold gold: MATCH DAY. White: BIG MATCH TODAY. Gold: Iranian Football. Text: Full analysis on Telegram. Fire. @persiantipster. No people.",
+}
+
 def load_offset():
     if os.path.exists(OFFSET_FILE):
-        return json.load(open(OFFSET_FILE)).get("offset", 0)
+        try: return json.load(open(OFFSET_FILE)).get("offset", 0)
+        except: return 0
     return 0
 
 def save_offset(offset):
-    json.dump({"offset": offset}, open(OFFSET_FILE, "w"))
+    json.dump({"offset": offset}, open(OFFSET_FILE,"w"))
 
 def tg_send(chat_id, text):
-    requests.post(f"{TG_BASE}/sendMessage",
-        json={"chat_id": chat_id, "text": text, "disable_notification": True}, timeout=10)
-
-# ── Generate story image (LOW = $0.011) ───────────────────────
-PROMPTS = {
-    "morning": "Vertical 9:16 dark sports betting Instagram Story. Black background deep red-orange glow. Large bold gold text: PICKS ARE LIVE. White text: Free daily Iranian sports analysis on Telegram. Small text: Football Futsal Volleyball Basketball Handball. Bottom: @persiantipster link in bio. Dark cinematic luxury style. No people.",
-    "win":     "Vertical 9:16 dark sports betting Instagram Story. Black gold green celebration. Confetti. Huge bold gold text: WE WON. White: Another verified win on Blogabet. Small: plus 31 percent yield 756 picks All verified. Bottom: @persiantipster persiantipster.blogabet.com. No people.",
-    "matchday":"Vertical 9:16 dark sports betting Instagram Story. Black background orange-red fire glow. Bold gold text: MATCH DAY. White: BIG MATCH TODAY. Gold: Iranian Football. Text: Full analysis on Telegram link in bio. Fire particles. @persiantipster. No people.",
-}
+    try:
+        requests.post(f"{TG_BASE}/sendMessage",
+            json={"chat_id":chat_id,"text":text,"disable_notification":True}, timeout=10)
+    except: pass
 
 def gen_image(story_type):
     r = requests.post(
         "https://api.openai.com/v1/images/generations",
-        headers={"Authorization": f"Bearer {OPENAI_KEY}"},
+        headers={"Authorization":f"Bearer {OPENAI_KEY}"},
         json={"model":"gpt-image-1","prompt":PROMPTS.get(story_type,PROMPTS["morning"]),
               "size":"1024x1536","quality":"low","output_format":"jpeg"},
         timeout=60)
@@ -57,7 +56,6 @@ def gen_image(story_type):
     print(f"  Image error: {d.get('error','?')}")
     return None
 
-# ── Upload image to GitHub Releases ───────────────────────────
 def upload_to_github(path, filename):
     if not GH_TOKEN or not GH_REPO: return None
     headers = {"Authorization":f"token {GH_TOKEN}","Accept":"application/vnd.github.v3+json"}
@@ -70,12 +68,10 @@ def upload_to_github(path, filename):
         release = r.json()
     rid = release.get("id")
     if not rid: return None
-    # Delete existing asset with same name
     assets = requests.get(f"https://api.github.com/repos/{GH_REPO}/releases/{rid}/assets",headers=headers,timeout=10).json()
     for a in (assets if isinstance(assets,list) else []):
         if a.get("name") == filename:
             requests.delete(f"https://api.github.com/repos/{GH_REPO}/releases/assets/{a['id']}",headers=headers,timeout=10)
-    # Upload
     up_url = f"https://uploads.github.com/repos/{GH_REPO}/releases/{rid}/assets?name={filename}"
     with open(path,"rb") as f:
         up = requests.post(up_url,headers={**headers,"Content-Type":"image/jpeg"},data=f,timeout=60)
@@ -84,111 +80,129 @@ def upload_to_github(path, filename):
         return f"https://github.com/{owner}/{repo}/releases/download/media-assets/{filename}"
     return None
 
-# ── Publish story via Claude API + Composio MCP ───────────────
-def publish_story_via_claude(story_type, image_url):
-    """Call Claude API which uses Composio MCP to publish the story"""
-    prompt = f"""Publish an Instagram Story for @persiantipster right now.
+def publish_story_composio(image_url):
+    """Publish story via Composio API v2 using image_url"""
+    headers = {"x-api-key": COMPOSIO_KEY, "Content-Type": "application/json"}
 
-Image URL (already generated): {image_url}
+    # Create container
+    r1 = requests.post(
+        "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA/execute",
+        headers=headers,
+        json={"input":{"ig_user_id":"me","image_url":image_url,"media_type":"STORIES"},
+              "connectedAccountId":IG_ACCOUNT},
+        timeout=30)
 
-Steps:
-1. Call INSTAGRAM_POST_IG_USER_MEDIA with:
-   - ig_user_id: "me"
-   - media_type: "STORIES"  
-   - image_url: "{image_url}"
-2. Call INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH with the container ID
-3. Reply with "✅ Story {story_type} published!" and the Instagram post ID
+    d1 = r1.json()
+    # Check for v2 retired error
+    if d1.get("error",{}).get("status") == 410:
+        print(f"  v2 retired, story queued for manual publish")
+        return None
 
-Do it now."""
+    cid = d1.get("data",{}).get("id")
+    if not cid:
+        print(f"  Container error: {d1}")
+        return None
 
-    r = requests.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": ANTHROPIC_KEY,
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 1000,
-            "messages": [{"role":"user","content":prompt}],
-            "mcp_servers": [{
-                "type": "url",
-                "url": "https://connect.composio.dev/mcp",
-                "name": "composio",
-                "authorization_token": COMPOSIO_KEY
-            }]
-        },
-        timeout=120
-    )
-    return r.json()
+    print(f"  Container: {cid} — waiting 20s...")
+    time.sleep(20)
 
-# ── Main ──────────────────────────────────────────────────────
+    # Publish
+    r2 = requests.post(
+        "https://backend.composio.dev/api/v2/actions/INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH/execute",
+        headers=headers,
+        json={"input":{"ig_user_id":"me","creation_id":cid,"max_wait_seconds":60},
+              "connectedAccountId":IG_ACCOUNT},
+        timeout=90)
+    d2 = r2.json()
+    return d2.get("data",{}).get("id")
+
 def main():
-    print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Telegram Command Handler")
+    print(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}] Telegram Commands v2")
 
     offset = load_offset()
+    print(f"  Current offset: {offset}")
+
     r = requests.get(f"{TG_BASE}/getUpdates",
-        params={"offset": offset, "timeout": 5, "limit": 20}, timeout=15)
-    updates = r.json().get("result", [])
+        params={"offset":offset,"timeout":5,"limit":20}, timeout=15)
+    updates = r.json().get("result",[])
     print(f"  Updates: {len(updates)}")
 
     new_offset = offset
+    processed_any = False
+
     for update in updates:
-        uid = update.get("update_id", 0)
+        uid = update.get("update_id",0)
         if uid >= new_offset: new_offset = uid + 1
 
-        msg = update.get("message", {})
-        user_id = msg.get("from", {}).get("id")
+        msg = update.get("message",{})
+        user_id = msg.get("from",{}).get("id")
         text = (msg.get("text") or "").strip()
-        chat_id = msg.get("chat", {}).get("id")
+        chat_id = msg.get("chat",{}).get("id")
 
-        if user_id != AUTHORIZED_USER or not text.startswith("/story"):
+        print(f"  Update {uid}: user={user_id} text='{text[:30]}'")
+
+        if user_id != AUTHORIZED_USER:
             continue
 
-        # Parse: /story morning | /story win | /story matchday
-        parts = text.lower().split()
-        story_type = parts[1] if len(parts) > 1 else "morning"
-        if story_type not in ["morning","win","matchday"]:
+        # Accept /story morning OR /story_morning OR /storymorning
+        story_type = None
+        text_lower = text.lower().replace("_","").replace(" ","")
+        if text_lower.startswith("/storymorning") or text_lower == "/storymorning":
             story_type = "morning"
+        elif text_lower.startswith("/storywin"):
+            story_type = "win"
+        elif text_lower.startswith("/storymatchday"):
+            story_type = "matchday"
+        elif text_lower.startswith("/story"):
+            # /story morning, /story win, etc.
+            parts = text.lower().split()
+            if len(parts) > 1:
+                t = parts[1].strip()
+                if t in ["morning","win","matchday"]:
+                    story_type = t
+                else:
+                    story_type = "morning"
+            else:
+                story_type = "morning"
 
-        print(f"  Command: /story {story_type}")
-        tg_send(chat_id, f"⏳ Generating {story_type} story (~30 sec)...")
+        if not story_type:
+            continue
+
+        print(f"  → /story {story_type} command!")
+        processed_any = True
+        tg_send(chat_id, f"⏳ Generando story {story_type}... (30 sec)")
 
         # 1. Generate image
         img_path = gen_image(story_type)
         if not img_path:
-            tg_send(chat_id, "❌ Image generation failed")
+            tg_send(chat_id, "❌ Errore generazione immagine")
             continue
 
-        # 2. Upload to GitHub
+        # 2. Upload to GitHub Releases
         filename = f"story_{story_type}_{int(time.time())}.jpg"
         image_url = upload_to_github(img_path, filename)
         if not image_url:
-            tg_send(chat_id, "❌ Upload failed")
+            tg_send(chat_id, "❌ Errore upload")
             continue
 
-        print(f"  Image ready: {image_url[-50:]}")
+        print(f"  ✅ Image: {image_url[-50:]}")
 
-        # 3. Publish via Claude API + Composio MCP
-        print("  Calling Claude API to publish story...")
-        result = publish_story_via_claude(story_type, image_url)
+        # 3. Publish via Composio
+        post_id = publish_story_composio(image_url)
 
-        # Check if published
-        content_text = " ".join(
-            block.get("text","") for block in result.get("content",[])
-            if block.get("type") == "text"
-        )
-        print(f"  Claude response: {content_text[:200]}")
-
-        if "published" in content_text.lower() or "✅" in content_text:
-            tg_send(chat_id, f"✅ Story {story_type.upper()} pubblicata!")
-            print("  ✅ Published!")
+        if post_id:
+            print(f"  ✅ Published! ID: {post_id}")
+            tg_send(chat_id, f"✅ Story {story_type.upper()} pubblicata su Instagram!")
         else:
-            tg_send(chat_id, f"⚠️ Controlla Instagram — story potrebbe essere pubblicata")
+            print(f"  ❌ Publish failed")
+            tg_send(chat_id, f"⚠️ Errore pubblicazione — riprova")
 
+        time.sleep(2)
+
+    # Always save new offset
     if new_offset > offset:
         save_offset(new_offset)
+        print(f"  Saved offset: {new_offset}")
 
 if __name__ == "__main__":
     main()
