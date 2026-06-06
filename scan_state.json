@@ -1,6 +1,6 @@
 {
   "vip_last_id": 661,
-  "free_last_id": 735,
+  "free_last_id": 785,
   "processed": [
     "FREE_61",
     "FREE_273",
@@ -17,6 +17,12 @@
     "FREE_709",
     "FREE_712",
     "FREE_713",
-    "FREE_730"
+    "FREE_730",
+    "FREE_750",
+    "FREE_765",
+    "FREE_766",
+    "FREE_767",
+    "FREE_768",
+    "FREE_773"
   ]
 }
