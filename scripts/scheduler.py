@@ -145,7 +145,7 @@ body {{ width:1080px; height:1350px; position:relative; font-family:'Inter',sans
 </div>
 <div class="footer">
   <div class="ctx">{post["footer_ctx"]}</div>
-  <div class="handle">@persiantipster</div>
+  <div class="handle">@tipster_persian</div>
 </div>
 <div class="botbar"></div>
 </body></html>"""
