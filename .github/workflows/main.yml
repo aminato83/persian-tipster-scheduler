@@ -7,6 +7,7 @@ on:
     - cron: '30 6 * * *'
     - cron: '0 6 * * 1'
     - cron: '*/2 * * * *'
+    - cron: '0 18 * * *'
   workflow_dispatch:
     inputs:
       task:
@@ -14,7 +15,7 @@ on:
         required: false
         default: 'publish'
         type: choice
-        options: [publish, telegram, weekly, story_morning, story_matchday, story_win, telegram_commands]
+        options: [publish, telegram, weekly, story_morning, story_matchday, story_win, telegram_commands, daily_trends]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -170,5 +171,29 @@ jobs:
           git config user.name "PersianTipster Bot"
           git add telegram_offset.json || true
           git diff --staged --quiet || git commit -m "Update telegram offset [skip ci]"
+          git pull --rebase || true
+          git push || true
+
+  daily_trends:
+    if: github.event.schedule == '0 18 * * *' || github.event.inputs.task == 'daily_trends'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests playwright -q
+      - run: playwright install --with-deps chromium
+      - run: python scripts/daily_trends.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Save published state
+        run: |
+          git config user.email "bot@persiantipster.com"
+          git config user.name "PersianTipster Bot"
+          git add published.json
+          git diff --staged --quiet || git commit -m "Daily trends published [skip ci]"
           git pull --rebase || true
           git push || true
