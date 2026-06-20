@@ -1,0 +1,32 @@
+name: Telegram Reel Scanner
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  telegram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests -q
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg --fix-missing -q
+      - run: python scripts/telegram_scanner.py
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Save scan state
+        run: |
+          git config user.email "bot@persiantipster.com"
+          git config user.name "PersianTipster Bot"
+          git add -A
+          git diff --staged --quiet || git commit -m "Update scan state [skip ci]"
+          git pull --rebase || true
+          git push || true
