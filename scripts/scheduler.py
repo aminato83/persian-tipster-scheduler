@@ -55,7 +55,7 @@ def get_bg(category):
 SCHEDULE = [
     {
         "name": "belgium_matchday",
-        "ts": 1782057600,
+        "ts": 1782061200,
         "category": "matchday",
         "label": "Match Day",
         "title": "BELGIUM<br>vs IRAN",
@@ -71,7 +71,7 @@ SCHEDULE = [
     },
     {
         "name": "egypt_intel",
-        "ts": 1782405000,
+        "ts": 1782408600,
         "category": "pretmatch",
         "label": "Pre-Match Intel",
         "title": "EGYPT<br>vs IRAN",
