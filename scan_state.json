@@ -1,5 +1,5 @@
 {
-  "vip_last_id": 765,
+  "vip_last_id": 772,
   "free_last_id": 1931,
   "processed": [
     "FREE_61",
@@ -106,6 +106,7 @@
     "VIP_736",
     "VIP_740",
     "VIP_750",
-    "VIP_760"
+    "VIP_760",
+    "VIP_771"
   ]
 }
