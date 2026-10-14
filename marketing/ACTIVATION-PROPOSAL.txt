@@ -31,3 +31,6 @@ Per un invio con stato processing o uncertain, verificare il canale prima di qua
 
 MOTIVO DELL'APPROVAZIONE
 Il controllo automatico ha rifiutato l'intervento iniziale su sette workflow e il push diretto del nuovo publisher su main, giudicandolo troppo ampio rispetto all'autorizzazione ricevuta. Questa proposta riduce la pausa ai sei flussi automatici e presenta i contenuti e il programma prima dell'attivazione.
+
+AGGIORNAMENTO 14 OTTOBRE — FOCUS CALCIO
+Contenuti aggiornati su calcio iraniano e squadre. Esperienza nel betting dal 2002, distinta da sei campagne di risultati. Claim di rendimento e singola vincita richiedono la verifica indicata nella ricerca. Il publisher resta disattivato e controlla publication_ready prima di inviare.

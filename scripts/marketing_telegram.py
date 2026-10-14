@@ -115,6 +115,8 @@ def publish(config, store, api, mode, now=None):
     for item in config['posts']:
         if item['kind']!=('intro' if mode=='publish_intro' else 'scheduled'): continue
         project=item['project_id']; key=action_key(item)
+        if not item.get('publication_ready',False):
+            report['skipped'].append({'id':item['id'],'reason':'content_review_required'}); continue
         if not config['enabled_projects'].get(project):
             report['skipped'].append({'id':item['id'],'reason':'project_not_enabled'}); continue
         if now<dt(item['due_at']): continue

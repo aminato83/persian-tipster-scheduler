@@ -7,7 +7,7 @@ NOW=datetime(2026,10,14,12,0,tzinfo=timezone.utc)
 def config():
  return {'campaign_id':'pilot_2026_10','enabled':True,'expires_at':'2026-10-28T23:59:00Z',
   'enabled_projects':{'persiantipster':True,'contropronostico':False},'posts':[
-   {'project_id':'persiantipster','id':'pt_intro','version':1,'kind':'intro','text':'VIP: 30 days.',
+   {'project_id':'persiantipster','id':'pt_intro','version':1,'kind':'intro','text':'VIP: 30 days.','publication_ready':True,
     'sources':['owner'],'due_at':'2026-10-14T00:00:00Z','expires_at':'2026-10-28T23:59:00Z','pin':True}]}
 class Store:
  def __init__(self): self.state={'actions':{}}; self.snapshots=[]; self.fail=False
@@ -50,6 +50,8 @@ class Tests(unittest.TestCase):
   self.c['enabled_projects']['persiantipster']=False;self.run_publish();self.assertEqual(self.a.sent,0)
  def test_activation_required_prevents_send(self):
   self.c['enabled']=False;self.run_publish();self.assertEqual(self.a.sent,0)
+ def test_unreviewed_content_prevents_send(self):
+  self.c['posts'][0]['publication_ready']=False;self.run_publish();self.assertEqual(self.a.sent,0)
  def test_expired_message_prevents_send(self):
   self.c['posts'][0]['expires_at']='2026-10-14T11:00:00Z';self.run_publish();self.assertEqual(self.a.sent,0)
  def test_rate_limit_is_delayed(self):

@@ -9,9 +9,9 @@
     {
       "project_id": "persiantipster",
       "id": "persiantipster_intro",
-      "version": 1,
+      "version": 2,
       "kind": "intro",
-      "text": "PERSIANTIPSTER — IRANIAN COMPETITIONS\n\nThe current VIP includes:\n• Asian Handicap selections\n• Live updates\n• Insider info\n\nOur focus is Iranian competitions, with selective coverage across football, futsal, basketball, volleyball and handball.\n\nVIP membership lasts 30 days. For current price, coverage, availability and terms, message VIP to @Persian_Tips and tell us your country and the Iranian sport you follow.\n\nExplore the historical record before deciding. Past performance does not guarantee future results.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "text": "PERSIANTIPSTER — IRANIAN FOOTBALL\n\nAsian Handicap selections. Live updates. Insider info.\n\nCurrent focus: Iranian competitions, with selective coverage. Ask which football leagues and fixtures are currently covered.\n\nBetting experience since 2002. The separate service-published Main VIP record covers six campaigns, 2020/21–2025/26, across all sports.\n\nVIP membership lasts 30 days. For current price, coverage, availability and terms, message VIP to t.me/Persian_Tips with your country and the Iranian competition you follow.\n\nExplore the historical record before deciding.\n\n18+ only. Betting involves a risk of financial loss. Past performance does not guarantee future results. Availability and eligibility depend on your country.",
       "buttons": [
         [
           {
@@ -32,7 +32,8 @@
         "owner_vip_inclusions_2026_10_14"
       ],
       "due_at": "2026-10-14T00:00:00Z",
-      "expires_at": "2026-10-28T23:59:00Z"
+      "expires_at": "2026-10-28T23:59:00Z",
+      "publication_ready": false
     },
     {
       "project_id": "contropronostico",
@@ -53,7 +54,8 @@
         "cp_site"
       ],
       "due_at": "2026-10-14T00:00:00Z",
-      "expires_at": "2026-10-28T23:59:00Z"
+      "expires_at": "2026-10-28T23:59:00Z",
+      "publication_ready": false
     },
     {
       "project_id": "contropronostico",
@@ -74,14 +76,15 @@
         "cp_site"
       ],
       "due_at": "2026-10-18T15:15:00+00:00",
-      "expires_at": "2026-10-18T23:15:00+00:00"
+      "expires_at": "2026-10-18T23:15:00+00:00",
+      "publication_ready": false
     },
     {
       "project_id": "persiantipster",
       "id": "pt_002_telegram",
-      "version": 6,
+      "version": 7,
       "kind": "scheduled",
-      "text": "MAIN VIP. REVIEW THE RECORD.\n\nBefore deciding, explore the historical reporting published by PersianTipster:\nhttps://persiantipster.com/results\nhttps://persiantipster.com/results/archive\n\nReview the reporting period, selection, published odds and settled outcome. Main VIP has its own scope; Small Value, Staking Partners and the partial Blogabet archive are separate.\n\nHistory describes past services and selections, not today’s available picks.\n\nCurrent VIP inclusions: Asian Handicap selections, live updates and insider info focused on Iranian competitions.\n\nFor 30-day VIP access, message “VIP” to @Persian_Tips. Price, coverage, availability and terms are shared privately.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "text": "MAIN VIP — THE PUBLISHED HISTORICAL RECORD\n\nThe site reports 39.8% mean historical campaign yield and 79.2% positive settlements excluding neutral outcomes, across 1,144 selections and six campaigns (2020/21–2025/26).\n\nScope: Main VIP, all sports. These are service-published historical figures, not football-only statistics or a return promise. Read the definitions and full record before deciding: https://persiantipster.com/results\n\nFor current 30-day membership details, message VIP-RECORD to t.me/Persian_Tips. Price and terms privately.\n\n18+ only. Betting involves a risk of financial loss. Past performance does not guarantee future results. Availability and eligibility depend on your country.",
       "buttons": [
         [
           {
@@ -91,7 +94,7 @@
         ],
         [
           {
-            "text": "Review the public record",
+            "text": "Review the complete record",
             "url": "https://persiantipster.com/results"
           }
         ]
@@ -105,7 +108,8 @@
         "owner_vip_inclusions_2026_10_14"
       ],
       "due_at": "2026-10-18T17:15:00+00:00",
-      "expires_at": "2026-10-19T01:15:00+00:00"
+      "expires_at": "2026-10-19T01:15:00+00:00",
+      "publication_ready": false
     },
     {
       "project_id": "contropronostico",
@@ -127,7 +131,8 @@
         "original_editorial_checklist"
       ],
       "due_at": "2026-10-21T15:15:00+00:00",
-      "expires_at": "2026-10-21T23:15:00+00:00"
+      "expires_at": "2026-10-21T23:15:00+00:00",
+      "publication_ready": false
     },
     {
       "project_id": "contropronostico",
@@ -149,14 +154,15 @@
         "original_hypothetical_example"
       ],
       "due_at": "2026-10-25T15:15:00+00:00",
-      "expires_at": "2026-10-25T23:15:00+00:00"
+      "expires_at": "2026-10-25T23:15:00+00:00",
+      "publication_ready": false
     },
     {
       "project_id": "persiantipster",
       "id": "pt_003_telegram",
-      "version": 1,
+      "version": 2,
       "kind": "scheduled",
-      "text": "IRANIAN HANDBALL — A PUBLIC ARCHIVE EXAMPLE\n\nThe Blogabet page for HEPCO Arak v Saipa Tehran was published on 24 February 2026. It documents a historical Iranian handball selection.\n\nThis is a record of past coverage, not today’s pick or a promise of future selections.\n\nInterested in current Iranian handball coverage? Message VIP to @Persian_Tips, with your country and the competition you follow. The VIP lasts 30 days; price and terms are shared privately.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "text": "PERSEPOLIS v MALAVAN — A HISTORICAL VIP ENTRY\n\n25 September 2025 · PT-MVIP-1025\nMalavan AH +1.5 · Published historical odds 1.925\nRecorded as WON in the service-published Main VIP archive.\n\nAn individual archive example, not a current pick or proof of attainable odds for every member. Consult the complete history, including negative and neutral settlements: https://persiantipster.com/results/archive\n\nCurrent 30-day VIP information: message VIP-CASE to t.me/Persian_Tips. Price and terms privately.\n\n18+ only. Betting involves a risk of financial loss. Past performance does not guarantee future results. Availability and eligibility depend on your country.",
       "buttons": [
         [
           {
@@ -166,14 +172,8 @@
         ],
         [
           {
-            "text": "Review the public record",
+            "text": "Review the complete record",
             "url": "https://persiantipster.com/results"
-          }
-        ],
-        [
-          {
-            "text": "Historical handball example",
-            "url": "https://persiantipster.blogabet.com/pick/49381757/hepco-arak-saipa-tehran"
           }
         ]
       ],
@@ -183,14 +183,15 @@
         "pt_blogabet_handball_49381757"
       ],
       "due_at": "2026-10-21T17:15:00+00:00",
-      "expires_at": "2026-10-22T01:15:00+00:00"
+      "expires_at": "2026-10-22T01:15:00+00:00",
+      "publication_ready": false
     },
     {
       "project_id": "persiantipster",
       "id": "pt_004_telegram",
-      "version": 1,
+      "version": 2,
       "kind": "scheduled",
-      "text": "LIVE UPDATES. IRANIAN FOCUS.\n\nPersianTipster VIP includes:\n• Asian Handicap selections\n• Live updates\n• Insider info\n\nCoverage is selective and focused on Iranian competitions.\n\nTell @Persian_Tips your country and the Iranian sport or competition you follow. Ask about current coverage, price and terms for the 30-day VIP.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "text": "BETTING EXPERIENCE SINCE 2002\n\nExperience since 2002, confirmed by the owner. Current promotional focus: Iranian football.\n\nVIP inclusions: Asian Handicap selections, live updates and insider info. Selective coverage.\n\nThe published Main VIP results are a separate six-campaign record (2020/21–2025/26), not a results archive dating back to 2002.\n\nAsk about the 30-day VIP: message VIP-EXPERIENCE to t.me/Persian_Tips, with your country and the Iranian competition you follow. Price and terms privately.\n\n18+ only. Betting involves a risk of financial loss. Past performance does not guarantee future results. Availability and eligibility depend on your country.",
       "buttons": [
         [
           {
@@ -200,7 +201,7 @@
         ],
         [
           {
-            "text": "Review the public record",
+            "text": "Review the complete record",
             "url": "https://persiantipster.com/results"
           }
         ]
@@ -211,7 +212,8 @@
         "owner_vip_terms"
       ],
       "due_at": "2026-10-25T17:15:00+00:00",
-      "expires_at": "2026-10-26T01:15:00+00:00"
+      "expires_at": "2026-10-26T01:15:00+00:00",
+      "publication_ready": false
     }
   ],
   "enabled": false
