@@ -60,4 +60,31 @@ class Tests(unittest.TestCase):
   self.c['posts'][0]['buttons']=[[{'text':'VIP','url':'https://t.me.evil.example/Persian_Tips'}]]
   with self.assertRaises(AssertionError):self.run_publish()
   self.assertEqual(self.a.sent,0)
+ def test_attempt_limit_prevents_send(self):
+  self.s.state['actions']['persiantipster|pt_intro|1|send_channel_message']={'state':'retryable','attempts':3}
+  self.run_publish();self.assertEqual(self.a.sent,0)
+ def test_persist_failure_after_delivery_does_not_allow_resend(self):
+  original=self.s.persist
+  def persist():
+   if self.a.sent:raise RuntimeError('confirmation_persistence_failed')
+   original()
+  self.s.persist=persist
+  with self.assertRaises(RuntimeError):self.run_publish()
+  self.s.persist=original;self.run_publish();self.assertEqual(self.a.sent,1)
+ def test_two_projects_keep_separate_text_and_destination(self):
+  class MultiApi(Api):
+   def call(self,method,payload=None):
+    if method=='getChat':
+     for id,name in ALLOWED.values():
+      if payload['chat_id']==id:return {'id':id,'type':'channel','username':name}
+    if method=='sendMessage':
+     self.sent+=1;self.payloads.append(payload)
+     return {'chat':{'id':payload['chat_id']},'message_id':self.sent,'text':payload['text']}
+    return super().call(method,payload)
+  self.c['enabled_projects']['contropronostico']=True
+  other=deepcopy(self.c['posts'][0]);other.update(project_id='contropronostico',id='cp_intro',text='Metodo e fonti. Contenuto italiano.',pin=False)
+  self.c['posts'].append(other);self.a=MultiApi(self.s);self.run_publish()
+  sent={p['chat_id']:p['text'] for p in self.a.payloads}
+  self.assertEqual(sent[ALLOWED['persiantipster'][0]],'VIP: 30 days.')
+  self.assertEqual(sent[ALLOWED['contropronostico'][0]],'Metodo e fonti. Contenuto italiano.')
 if __name__=='__main__':unittest.main()
