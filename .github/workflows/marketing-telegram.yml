@@ -1,0 +1,44 @@
+name: Marketing Telegram Pilot
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Verify access, publish the introduction, or deliver due pilot posts
+        type: choice
+        options: [verify, publish_intro, publish_due]
+        default: verify
+  schedule:
+    - cron: '15 15 18,21,25 10 *'
+    - cron: '15 17 18,21,25 10 *'
+permissions:
+  contents: write
+concurrency:
+  group: marketing-telegram-pilot
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prepare state commits
+        run: |
+          git config user.name 'PersianTipster Marketing Bot'
+          git config user.email 'marketing-bot@users.noreply.github.com'
+      - name: Verify or publish within the pilot
+        run: python scripts/marketing_telegram.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          MARKETING_MODE: ${{ github.event_name == 'schedule' && 'publish_due' || inputs.mode }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: telegram-pilot-report
+          path: telegram-pilot-report.json
+          retention-days: 7

@@ -1,0 +1,218 @@
+{
+  "campaign_id": "pilot_2026_10",
+  "expires_at": "2026-10-28T23:59:00Z",
+  "enabled_projects": {
+    "persiantipster": true,
+    "contropronostico": false
+  },
+  "posts": [
+    {
+      "project_id": "persiantipster",
+      "id": "persiantipster_intro",
+      "version": 1,
+      "kind": "intro",
+      "text": "PERSIANTIPSTER — IRANIAN COMPETITIONS\n\nThe current VIP includes:\n• Asian Handicap selections\n• Live updates\n• Insider info\n\nOur focus is Iranian competitions, with selective coverage across football, futsal, basketball, volleyball and handball.\n\nVIP membership lasts 30 days. For current price, coverage, availability and terms, message VIP to @Persian_Tips and tell us your country and the Iranian sport you follow.\n\nExplore the historical record before deciding. Past performance does not guarantee future results.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "buttons": [
+        [
+          {
+            "text": "Ask about the 30-day VIP",
+            "url": "https://t.me/Persian_Tips"
+          }
+        ],
+        [
+          {
+            "text": "Review the public record",
+            "url": "https://persiantipster.com/results"
+          }
+        ]
+      ],
+      "pin": true,
+      "sources": [
+        "owner_vip_terms",
+        "owner_vip_inclusions_2026_10_14"
+      ],
+      "due_at": "2026-10-14T00:00:00Z",
+      "expires_at": "2026-10-28T23:59:00Z"
+    },
+    {
+      "project_id": "contropronostico",
+      "id": "contropronostico_intro",
+      "version": 1,
+      "kind": "intro",
+      "text": "BENVENUTO SU CONTROPRONOSTICO\n\nIl punto di partenza è la partita: fonti, disponibilità dei giocatori e contesto competitivo.\n\nQui condividiamo contenuti di metodo e analisi calcistica. Una notizia va distinta dalla sua interpretazione e aggiornata quando arrivano nuove conferme.\n\nPresentazione, metodo e collegamenti ufficiali: https://contropronostico.com/\n\nLe analisi esprimono valutazioni, non certezze sull’esito di una partita.",
+      "buttons": [
+        [
+          {
+            "text": "Metodo e sito ufficiale",
+            "url": "https://contropronostico.com/"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "cp_site"
+      ],
+      "due_at": "2026-10-14T00:00:00Z",
+      "expires_at": "2026-10-28T23:59:00Z"
+    },
+    {
+      "project_id": "contropronostico",
+      "id": "cp_002_telegram",
+      "version": 2,
+      "kind": "scheduled",
+      "text": "CONVOCATO NON SIGNIFICA TITOLARE\n\nUna convocazione segnala disponibilità. Una probabile formazione è una previsione. La distinta ufficiale conferma le scelte iniziali comunicate dalla squadra.\n\nQuando condividiamo una notizia, fonte e orario contano quanto il contenuto. Se arriva una conferma diversa, va aggiornata anche l'analisi.\n\nQuali fonti ufficiali consulti nel prepartita?",
+      "buttons": [
+        [
+          {
+            "text": "Metodo e sito ufficiale",
+            "url": "https://contropronostico.com/"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "cp_site"
+      ],
+      "due_at": "2026-10-18T15:15:00+00:00",
+      "expires_at": "2026-10-18T23:15:00+00:00"
+    },
+    {
+      "project_id": "persiantipster",
+      "id": "pt_002_telegram",
+      "version": 6,
+      "kind": "scheduled",
+      "text": "MAIN VIP. REVIEW THE RECORD.\n\nBefore deciding, explore the historical reporting published by PersianTipster:\nhttps://persiantipster.com/results\nhttps://persiantipster.com/results/archive\n\nReview the reporting period, selection, published odds and settled outcome. Main VIP has its own scope; Small Value, Staking Partners and the partial Blogabet archive are separate.\n\nHistory describes past services and selections, not today’s available picks.\n\nCurrent VIP inclusions: Asian Handicap selections, live updates and insider info focused on Iranian competitions.\n\nFor 30-day VIP access, message “VIP” to @Persian_Tips. Price, coverage, availability and terms are shared privately.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "buttons": [
+        [
+          {
+            "text": "Ask about the 30-day VIP",
+            "url": "https://t.me/Persian_Tips"
+          }
+        ],
+        [
+          {
+            "text": "Review the public record",
+            "url": "https://persiantipster.com/results"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "pt_vip_results",
+        "pt_vip_archive",
+        "pt_vip_telegram_history",
+        "owner_vip_terms",
+        "owner_vip_inclusions_2026_10_14"
+      ],
+      "due_at": "2026-10-18T17:15:00+00:00",
+      "expires_at": "2026-10-19T01:15:00+00:00"
+    },
+    {
+      "project_id": "contropronostico",
+      "id": "cp_003_telegram",
+      "version": 1,
+      "kind": "scheduled",
+      "text": "UNA NOTIZIA, DUE ORARI\n\nQuando è successo il fatto? Quando è stato pubblicato?\n\nUn’intervista di ieri può tornare nel feed oggi. Prima di usarla nell’analisi, cerca la data originale e le conferme successive.\n\nFonte, data dell’evento e ultimo aggiornamento: tre elementi da conservare insieme.\n\nMetodo e canali ufficiali: https://contropronostico.com/",
+      "buttons": [
+        [
+          {
+            "text": "Metodo e sito ufficiale",
+            "url": "https://contropronostico.com/"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "cp_site",
+        "original_editorial_checklist"
+      ],
+      "due_at": "2026-10-21T15:15:00+00:00",
+      "expires_at": "2026-10-21T23:15:00+00:00"
+    },
+    {
+      "project_id": "contropronostico",
+      "id": "cp_004_telegram",
+      "version": 1,
+      "kind": "scheduled",
+      "text": "STESSO RUOLO, COMPITI DIVERSI\n\nSostituire un giocatore non significa sostituirne automaticamente tutte le funzioni.\n\nEsempio ipotetico: due terzini possono offrire soluzioni diverse per ampiezza e costruzione. Prima di concludere, verifica i compiti e le alternative contro quell’avversario.\n\nL’impatto va spiegato attraverso un meccanismo concreto.\n\nhttps://contropronostico.com/",
+      "buttons": [
+        [
+          {
+            "text": "Metodo e sito ufficiale",
+            "url": "https://contropronostico.com/"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "cp_site",
+        "original_hypothetical_example"
+      ],
+      "due_at": "2026-10-25T15:15:00+00:00",
+      "expires_at": "2026-10-25T23:15:00+00:00"
+    },
+    {
+      "project_id": "persiantipster",
+      "id": "pt_003_telegram",
+      "version": 1,
+      "kind": "scheduled",
+      "text": "IRANIAN HANDBALL — A PUBLIC ARCHIVE EXAMPLE\n\nThe Blogabet page for HEPCO Arak v Saipa Tehran was published on 24 February 2026. It documents a historical Iranian handball selection.\n\nThis is a record of past coverage, not today’s pick or a promise of future selections.\n\nInterested in current Iranian handball coverage? Message VIP to @Persian_Tips, with your country and the competition you follow. The VIP lasts 30 days; price and terms are shared privately.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "buttons": [
+        [
+          {
+            "text": "Ask about the 30-day VIP",
+            "url": "https://t.me/Persian_Tips"
+          }
+        ],
+        [
+          {
+            "text": "Review the public record",
+            "url": "https://persiantipster.com/results"
+          }
+        ],
+        [
+          {
+            "text": "Historical handball example",
+            "url": "https://persiantipster.blogabet.com/pick/49381757/hepco-arak-saipa-tehran"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "owner_vip_inclusions_2026_10_14",
+        "pt_blogabet_handball_49381757"
+      ],
+      "due_at": "2026-10-21T17:15:00+00:00",
+      "expires_at": "2026-10-22T01:15:00+00:00"
+    },
+    {
+      "project_id": "persiantipster",
+      "id": "pt_004_telegram",
+      "version": 1,
+      "kind": "scheduled",
+      "text": "LIVE UPDATES. IRANIAN FOCUS.\n\nPersianTipster VIP includes:\n• Asian Handicap selections\n• Live updates\n• Insider info\n\nCoverage is selective and focused on Iranian competitions.\n\nTell @Persian_Tips your country and the Iranian sport or competition you follow. Ask about current coverage, price and terms for the 30-day VIP.\n\n18+ only. Betting involves a risk of financial loss. Availability and eligibility depend on your country.",
+      "buttons": [
+        [
+          {
+            "text": "Ask about the 30-day VIP",
+            "url": "https://t.me/Persian_Tips"
+          }
+        ],
+        [
+          {
+            "text": "Review the public record",
+            "url": "https://persiantipster.com/results"
+          }
+        ]
+      ],
+      "pin": false,
+      "sources": [
+        "owner_vip_inclusions_2026_10_14",
+        "owner_vip_terms"
+      ],
+      "due_at": "2026-10-25T17:15:00+00:00",
+      "expires_at": "2026-10-26T01:15:00+00:00"
+    }
+  ],
+  "enabled": false
+}
