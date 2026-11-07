@@ -1,0 +1,31 @@
+name: Marketing Telegram Access Check
+on:
+  push:
+    branches: [marketing/telegram-pilot-20261014]
+    paths:
+      - scripts/marketing_telegram_access.py
+      - .github/workflows/marketing-telegram-access.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: marketing-telegram-access
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check existing bot and channel permissions
+        run: python scripts/marketing_telegram_access.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: telegram-access-report
+          path: telegram-access-report.json
+          retention-days: 3

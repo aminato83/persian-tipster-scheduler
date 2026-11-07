@@ -1,0 +1,36 @@
+PROPOSTA PRONTA — TELEGRAM PERSIANTIPSTER
+
+Stato: collegamento tecnico verificato; pubblicazione non attivata.
+Bot esistente: @PersianTipster_Bot. Credenziale già custodita in GitHub.
+Canale pubblico autorizzato e verificato: @tipster_persian.
+Canale Contropronostico: identificato, ma il bot non risulta amministratore. Rimane disabilitato.
+
+INTERVENTO DA APPROVARE
+1. Attivare il nuovo flusso Telegram solo per il canale pubblico PersianTipster.
+2. Pubblicare e fissare il messaggio di presentazione: Asian Handicap, live updates, insider info, durata 30 giorni, prezzo in privato; pulsanti verso @Persian_Tips e lo storico pubblico.
+3. Pianificare tre adattamenti Telegram: 18, 21 e 25 ottobre. Le consegne scadono dopo otto ore per evitare recuperi di messaggi vecchi. Il pilota termina il 28 ottobre.
+4. Mettere in pausa sei vecchi flussi automatici di PersianTipster: Daily Trends, Publish Scheduled Posts, Story Morning, Telegram Commands Listener, Telegram Reel Scanner e Weekly Generator. La pausa impedisce sovrapposizioni con Buffer, ripubblicazioni automatiche dal VIP e utilizzo dei vecchi testi e generatori. I file e i dati rimangono disponibili.
+
+ALTRI ACCOUNT
+Metricool e BEFORETHEXI non sono coinvolti.
+I quattro post già programmati in Buffer non cambiano.
+Contropronostico dispone di testi e destinazione separati, ma il suo canale resta escluso fino alla verifica del permesso di pubblicazione.
+
+CONTROLLI
+Destinazioni ammesse definite nel programma e verificate tramite identità del canale e permessi del bot prima di ogni invio.
+Stato salvato prima dell'invio; esiti incerti bloccano il reinvio automatico.
+Nessuna lettura di messaggi VIP, nessun inoltro, nessun getUpdates, nessuna modifica del webhook.
+Nessuna risposta automatica a potenziali clienti: prezzo, disponibilità, condizioni e vendita vengono gestiti dal contatto ufficiale.
+Nessuna AI a pagamento; nessun broadcast a pagamento; nessun nuovo abbonamento.
+Le esecuzioni usano GitHub Actions già esistente e la relativa quota dell'account. Non è stato verificato il suo consumo fatturabile.
+
+ARRESTO E RIPRISTINO
+Arresto immediato: disabilitare il workflow Marketing Telegram Pilot o impostare enabled=false nel file marketing/telegram-pilot.json.
+Ripristino: riabilitare singolarmente i vecchi workflow necessari, dopo aver verificato testi e destinazioni. La pausa non cancella contenuti o canali.
+Per un invio con stato processing o uncertain, verificare il canale prima di qualunque nuovo tentativo.
+
+MOTIVO DELL'APPROVAZIONE
+Il controllo automatico ha rifiutato l'intervento iniziale su sette workflow e il push diretto del nuovo publisher su main, giudicandolo troppo ampio rispetto all'autorizzazione ricevuta. Questa proposta riduce la pausa ai sei flussi automatici e presenta i contenuti e il programma prima dell'attivazione.
+
+AGGIORNAMENTO 14 OTTOBRE — FOCUS CALCIO
+Contenuti aggiornati su calcio iraniano e squadre. Esperienza nel betting dal 2002, distinta da sei campagne di risultati. Claim di rendimento e singola vincita richiedono la verifica indicata nella ricerca. Il publisher resta disattivato e controlla publication_ready prima di inviare.
